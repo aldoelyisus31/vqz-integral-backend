@@ -1,23 +1,43 @@
 version: '3.8'
 
 services:
-  app:
-    build:
-      context: ../../
-      dockerfile: Dockerfile
-      target: dev
+  db:
+    # env_file:
+    #   - ../../.env.development
+    image: postgres:17.5
     ports:
-      - "3000:3000"
-      - "9229:9229"  # Debug port
+      - "${DB_PORT}:5432"
     environment:
-      - NODE_ENV=development
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    container_name: ${DB_NAME}
     volumes:
-      - ../../:/app
-      - /app/node_modules
-    command: npm run start:dev  # Use development mode with hot-reload
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-    restart: unless-stopped
+      - ./postgres:/var/lib/postgresql/data
+    restart: always
+
+  # app:
+  #   depends_on:
+  #     - db
+  #   env_file:
+  #     - ../../.env.development
+  #   container_name: ${APP_NAME}
+  #   build:
+  #     context: ../../
+  #     dockerfile: Dockerfile
+  #     target: dev
+  #   ports:
+  #     - "3000:3000"
+  #     - "9229:9229"  # Debug port
+  #   environment:
+  #     - NODE_ENV=development
+  #   volumes:
+  #     - ../../:/app
+  #     - /app/node_modules
+  #   command: npm run start:dev  # Use development mode with hot-reload
+  #   healthcheck:
+  #     test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+  #     interval: 30s
+  #     timeout: 3s
+  #     retries: 3
+  #   restart: unless-stopped
