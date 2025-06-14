@@ -4,11 +4,12 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UserCredential } from './entities/user-credential.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import * as bcrypt from 'bcrypt';
+import { BcryptService } from 'src/utils/bcrypt/bcrypt.service';
 
 @Injectable()
 export class UsersService {
   constructor(
+    private readonly bcryptService: BcryptService,
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
     @InjectRepository(UserCredential)
@@ -38,7 +39,7 @@ export class UsersService {
     await this.usersRepository.save(user);
 
     // Create user credentials
-    const passwordHash = await bcrypt.hash(createUserDto.password, 10);
+    const passwordHash = await this.bcryptService.hashPassword(createUserDto.password);
     const credentials = this.credentialsRepository.create({
       userId: user.id,
       passwordHash,
