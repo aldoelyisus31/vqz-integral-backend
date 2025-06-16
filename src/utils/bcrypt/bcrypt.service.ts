@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { hash, compare } from 'bcrypt';
-import { config } from 'dotenv';
 
 @Injectable()
 export class BcryptService {

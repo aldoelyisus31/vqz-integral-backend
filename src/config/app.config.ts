@@ -1,6 +1,10 @@
 import * as Joi from "joi";
+import { config } from 'dotenv';
 
-export type AppEnv = 'DEVELOPMENT' | 'PRODUCTION' | 'TESTING';
+export type AppEnv = 'development' | 'production' | 'testing';
+
+const nodeEnv = process.env.NODE_ENV || 'development';
+const con = config({ path: `.env.${nodeEnv}` });
 
 export const APP_CONFIG = () => ({
   node_env: process.env.NODE_ENV,
@@ -57,5 +61,25 @@ export const APP_CONFIG_SCHEMA = Joi.object({
   // JWT Config ----------------------------------------------------
   JWT_SECRET    : Joi.string().min(1).required(),
   JWT_EXPIRES_IN: Joi.string().min(1).required(),
-})
+});
+
+export const validateAppConfig = (config: Record<string, any>) => {
+  const { error, value } = APP_CONFIG_SCHEMA.validate(config, {
+    abortEarly: false,
+    convert: true,
+  });
+
+  if (error) {
+    throw new Error(`Configuration validation error: ${error.message}`);
+  }
+
+  return value;
+};
+
+export const getAppConfig = () => {
+  validateAppConfig(con.parsed || {});
+  return APP_CONFIG();
+}
+
+export const appConfig = getAppConfig();
 

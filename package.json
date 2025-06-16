@@ -18,7 +18,14 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "docker:dev": "docker-compose -f ./docker/development/docker-compose.yml --env-file .env.development up -d && node wait-for-db.js"
+    "docker:dev": "docker-compose -f ./docker/development/docker-compose.yml --env-file .env.development up -d && node wait-for-db.js",
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:generate": "npm run typeorm -- migration:generate -d src/database/data-source.ts",
+    "migration:run": "npm run typeorm -- migration:run -d src/database/data-source.ts",
+    "migration:revert": "npm run typeorm -- migration:revert -d src/database/data-source.ts",
+    "seed:dev": "NODE_ENV=development ts-node src/database/seed.ts",
+    "seed:test": "NODE_ENV=testing ts-node src/database/seed.ts",
+    "seed:prod": "NODE_ENV=production ts-node src/database/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -40,6 +47,7 @@
     "typeorm": "^0.3.19"
   },
   "devDependencies": {
+    "@faker-js/faker": "^8.3.1",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/swagger": "^7.1.17",
