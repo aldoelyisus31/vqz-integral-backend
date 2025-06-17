@@ -27,6 +27,9 @@
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
 # Project Setup and Configuration
+| name | version |
+|--|--|
+| Node.js | v20.11.1 |
 
 ## Development Environment
 
@@ -118,7 +121,7 @@ $ npm run test:e2e
 ```
 
 To run E2E tests again:
-1. Remove the test database container and its volume. The path is `docker/test/`, delete the `postgres` folder.
+1. Remove the test database container and its volume. The path is `/docker/test/`, delete the `postgres` folder.
 2. Repeat the steps above in the same order
 
 Additional E2E test commands:
