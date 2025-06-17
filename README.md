@@ -26,36 +26,108 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
-## Project setup
+# Project Setup and Configuration
 
+## Development Environment
+
+1. Install dependencies:
 ```bash
 $ npm install
 ```
 
-## Compile and run the project
+2. Set up environment variables:
+   - Copy `.env.example` to `.env.development`
+   - Configure your database and other environment variables as needed
 
+3. Start the development database:
 ```bash
-# development
-$ npm run start
+$ npm run docker:dev
+```
+This command will:
+- Start a PostgreSQL container with the development database
+- Wait for the database to be ready for connections
+- Excecutes the comand `$ npm run start:dev`
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+4. Run database migrations and seed initial data:
+```bash
+$ npm run migration:run
+$ npm run seed:dev
 ```
 
-## Run tests
+5. Start the application:
+The previous command start de project (`$ npm run docker:dev`) but the Nest.js commands still works as well.
+```bash
+# Standard development mode
+$ npm run start
+
+# Watch mode (recommended for development)
+$ npm run start:dev
+
+# Debug mode
+$ npm run start:debug
+```
+### Notes
+
+* When you stop the project using `Ctrl + C`, the NestJS app will stop, but the Docker container will remain running.
+If the container is still running, you don’t need to run `$ npm run docker:dev` again — you can use one of the previously mentioned commands to start the project.
+
+* To completely reinitialize the Docker container from scratch:
+
+    1- Stop the container if it's running.
+
+    2- Delete the postgres volume located in the /docker/development/ directory.
+
+    3- Run the following command again to rebuild and start the container:
+
+    ```bash
+    $ npm run docker:dev
+    ```
+
+## Testing Environment
+
+### Unit Tests
+Unit tests don't require a database connection and can be run directly:
 
 ```bash
-# unit tests
+# Run unit tests
 $ npm run test
 
-# e2e tests
-$ npm run test:e2e
+# Run unit tests in watch mode
+$ npm run test:watch
 
-# test coverage
+# Generate unit test coverage report
 $ npm run test:cov
+```
+
+### E2E Tests
+E2E tests require a dedicated test database. Follow these steps in order:
+
+1. Start the test database container:
+```bash
+$ npm run docker:test
+```
+
+2. Seed the test database with initial test data:
+```bash
+$ npm run seed:test
+```
+
+3. Run the E2E tests:
+```bash
+$ npm run test:e2e
+```
+
+To run E2E tests again:
+1. Remove the test database container and its volume. The path is `docker/test/`, delete the `postgres` folder.
+2. Repeat the steps above in the same order
+
+Additional E2E test commands:
+```bash
+# Run E2E tests in watch mode
+$ npm run test:e2e:watch
+
+# Generate E2E test coverage report
+$ npm run test:e2e:cov
 ```
 
 ## Resources
