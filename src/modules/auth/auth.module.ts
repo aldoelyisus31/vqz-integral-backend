@@ -8,7 +8,7 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
 import { AccessHistory } from '../users/entities/access-history.entity';
-import { UtilsModule } from 'src/utils/utils.module';
+import { UtilsModule } from '../../utils/utils.module';
 
 @Module({
   imports: [

@@ -55,7 +55,9 @@ export class UsersController {
   })
   async findById(@Param('id', ParseIntPipe) id: number): Promise<User> {
     try {
-      return await this.usersService.findById(id);
+      const user = await this.usersService.findById(id);
+      delete user.credentials;
+      return user;
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -83,7 +85,9 @@ export class UsersController {
   })
   async findByUsername(@Param('username') username: string): Promise<User> {
     try {
-      return await this.usersService.findByUsername(username);
+      const user = await this.usersService.findByUsername(username);
+      delete user.credentials;
+      return user;
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;

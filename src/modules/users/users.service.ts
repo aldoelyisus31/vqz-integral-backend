@@ -6,7 +6,7 @@ import { UserCredential } from './entities/user-credential.entity';
 import { UserType } from './entities/user-type.entity';
 import { AccessMethod } from './entities/access-method.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import { BcryptService } from 'src/utils/bcrypt/bcrypt.service';
+import { BcryptService } from '../../utils/bcrypt/bcrypt.service';
 
 @Injectable()
 export class UsersService {
@@ -82,6 +82,7 @@ export class UsersService {
 
       // Commit transaction
       await queryRunner.commitTransaction();
+      delete user.credentials;
       return user;
 
     } catch (error) {

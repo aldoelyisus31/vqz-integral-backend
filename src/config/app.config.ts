@@ -45,7 +45,7 @@ export const APP_CONFIG = () => ({
  * - `JWT_EXPIRES_IN`: The expiration time for JWT tokens (required).
  */
 export const APP_CONFIG_SCHEMA = Joi.object({
-  NODE_ENV: Joi.string().default('DEVELOPMENT'),
+  NODE_ENV: Joi.string().default('development'),
 
   // App Config ----------------------------------------------------
   APP_NAME: Joi.string().min(1).default('NestJS API'),
@@ -82,4 +82,3 @@ export const getAppConfig = () => {
 }
 
 export const appConfig = getAppConfig();
-

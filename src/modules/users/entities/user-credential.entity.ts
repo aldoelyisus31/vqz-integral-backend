@@ -20,7 +20,7 @@ export class UserCredential {
   @Column({ type: 'bigint' })
   accessMethodId: number;
 
-  @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP', select: false })
   createdAt: Date;
 
   @ManyToOne(() => User, (user) => user.credentials, { onDelete: 'CASCADE' })

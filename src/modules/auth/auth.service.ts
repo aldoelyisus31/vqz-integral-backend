@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { AccessHistory } from '../users/entities/access-history.entity';
-import { BcryptService } from 'src/utils/bcrypt/bcrypt.service';
+import { BcryptService } from '../../utils/bcrypt/bcrypt.service';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +19,7 @@ export class AuthService {
 
   async validateUser(username: string, password: string): Promise<any> {
     const user = await this.usersService.findByUsername(username);
+
     if (!user || !user.credentials[0]) {
       throw new UnauthorizedException('Invalid credentials');
     }

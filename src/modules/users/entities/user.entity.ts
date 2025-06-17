@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } f
 import { ApiProperty } from '@nestjs/swagger';
 import { UserCredential } from './user-credential.entity';
 import { AccessHistory } from './access-history.entity';
+import { IsOptional } from 'class-validator';
 
 @Entity('users')
 export class User {
@@ -26,24 +27,28 @@ export class User {
   @Column({ type: 'text', unique: true })
   email: string;
 
+  @IsOptional()
   @ApiProperty({
     description: 'The full name of the user',
     example: 'John Doe',
     required: false
   })
   @Column({ type: 'text', nullable: true })
-  fullName: string;
+  fullName?: string;
 
+  @IsOptional()
   @ApiProperty({
     description: 'The timestamp when the user was created',
     example: '2023-01-01T00:00:00Z'
   })
   @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;
+  createdAt?: Date;
 
+  @IsOptional()
   @OneToMany(() => UserCredential, (credential) => credential.user)
-  credentials: UserCredential[];
+  credentials?: UserCredential[];
 
+  @IsOptional()
   @OneToMany(() => AccessHistory, (history) => history.user)
-  accessHistory: AccessHistory[];
+  accessHistory?: AccessHistory[];
 }

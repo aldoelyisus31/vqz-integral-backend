@@ -7,7 +7,7 @@ import { UserCredential } from './entities/user-credential.entity';
 import { UserType } from './entities/user-type.entity';
 import { AccessMethod } from './entities/access-method.entity';
 import { AccessHistory } from './entities/access-history.entity';
-import { UtilsModule } from 'src/utils/utils.module';
+import { UtilsModule } from '../../utils/utils.module';
 
 @Module({
   imports: [

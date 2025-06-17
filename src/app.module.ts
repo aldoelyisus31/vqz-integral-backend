@@ -12,7 +12,7 @@ import { UtilsModule } from './utils/utils.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `.env.${process.env.NODE_ENV || 'DEVELOPMENT'}`,
+      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
       load: [APP_CONFIG],
       validationSchema: APP_CONFIG_SCHEMA,
     }),
