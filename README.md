@@ -47,7 +47,7 @@ $ npm install
 $ npm run docker:dev
 ```
 This command will:
-- Start a PostgreSQL container with the development database
+- Start a PostgreSQL container with the development database and PGAdmin manager.
 - Wait for the database to be ready for connections
 - Excecutes the comand `$ npm run start:dev`
 
@@ -85,6 +85,19 @@ If the container is still running, you don’t need to run `$ npm run docker:dev
     ```bash
     $ npm run docker:dev
     ```
+
+* To view the database:
+
+  1- Open your browser and go to localhost:5050.
+
+  2- Log in using the following credentials:
+
+      Username: admin@admin.com
+      Password: admin
+
+  3- Once logged in, create a new server connection using the database credentials from your .env.development file.
+
+      Host: pgadmin_dev_db (this is the container name)
 
 ## Testing Environment
 
