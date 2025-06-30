@@ -1,10 +1,11 @@
-import { Controller, Post, Body, UseGuards, Get, HttpStatus, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, HttpStatus, UnauthorizedException, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -71,6 +72,34 @@ export class AuthController {
       }
       throw error;
     }
+  }
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Initiate Google OAuth login' })
+  @ApiResponse({
+    status: HttpStatus.FOUND,
+    description: 'Redirects to Google login page.'
+  })
+  async googleAuth() {
+    // This method is empty as the guard handles the Google OAuth flow
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Handle Google OAuth callback' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User has been successfully logged in with Google.',
+    schema: {
+      type: 'object',
+      properties: {
+        access_token: { type: 'string' }
+      }
+    }
+  })
+  async googleAuthCallback(@Req() req) {
+    return this.authService.loginWithGoogle(req.user);
   }
 
   @UseGuards(JwtAuthGuard)

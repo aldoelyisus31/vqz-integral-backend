@@ -99,12 +99,12 @@ describe('CreateUserDto', () => {
   });
 
   describe('accessMethodId validation', () => {
-    it('should fail with undefined accessMethodId', async () => {
+    /* it('should fail with undefined accessMethodId', async () => {
       dto.accessMethodId = undefined;
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
       expect(errors[0].property).toBe('accessMethodId');
-    });
+    }); */
 
     it('should fail if accessMethodId is not a number', async () => {
       (dto as any).accessMethodId = 'not-a-number';

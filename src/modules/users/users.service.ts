@@ -51,13 +51,22 @@ export class UsersService {
         throw new BadRequestException(`User type with ID ${createUserDto.userTypeId} not found`);
       }
 
-      // Validate access method exists
-      const accessMethod = await this.accessMethodRepository.findOne({
-        where: { id: createUserDto.accessMethodId },
-      });
+      // Get access method
+      let accessMethod;
+      if (createUserDto.accessMethodId) {
+        accessMethod = await this.accessMethodRepository.findOne({
+          where: { id: createUserDto.accessMethodId },
+        });
+      } else if (createUserDto.accessMethod) {
+        accessMethod = await this.accessMethodRepository.findOne({
+          where: { methodName: createUserDto.accessMethod },
+        });
+      } else {
+        throw new BadRequestException('Either accessMethodId or accessMethod must be provided');
+      }
 
       if (!accessMethod) {
-        throw new BadRequestException(`Access method with ID ${createUserDto.accessMethodId} not found`);
+        throw new BadRequestException('Access method not found');
       }
 
       // Create user
@@ -65,18 +74,25 @@ export class UsersService {
         username: createUserDto.username,
         email: createUserDto.email,
         fullName: createUserDto.fullName,
+        profileImage: createUserDto.profileImage,
       });
 
       await queryRunner.manager.save(user);
 
       // Create user credentials
-      const passwordHash = await this.bcryptService.hashPassword(createUserDto.password);
       const credentials = this.credentialsRepository.create({
         user,
-        passwordHash,
         userTypeId: createUserDto.userTypeId,
-        accessMethodId: createUserDto.accessMethodId,
+        accessMethodId: accessMethod.id,
       });
+
+      // Only hash password for credentials method
+      if (accessMethod.methodName === 'credentials') {
+        if (!createUserDto.password) {
+          throw new BadRequestException('Password is required for credentials method');
+        }
+        credentials.passwordHash = await this.bcryptService.hashPassword(createUserDto.password);
+      }
 
       await queryRunner.manager.save(credentials);
 
@@ -95,6 +111,19 @@ export class UsersService {
     }
   }
 
+  async findById(id: number): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      relations: ['credentials'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
+
   async findByUsername(username: string): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { username },
@@ -108,16 +137,57 @@ export class UsersService {
     return user;
   }
 
-  async findById(id: number): Promise<User> {
+  async findByEmail(email: string): Promise<User> {
     const user = await this.usersRepository.findOne({
-      where: { id },
-      relations: ['credentials'],
+      where: { email },
+      relations: ['credentials', 'credentials.accessMethod'],
     });
 
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
     return user;
+  }
+
+  async update(id: number, updateData: Partial<User>): Promise<User> {
+    await this.usersRepository.update(id, updateData);
+    return this.findById(id);
+  }
+
+  async addAccessMethod(userId: number, methodName: string): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const user = await this.findById(userId);
+      const accessMethod = await this.accessMethodRepository.findOne({
+        where: { methodName },
+      });
+
+      if (!accessMethod) {
+        throw new BadRequestException(`Access method ${methodName} not found`);
+      }
+
+      // Get default user type (you might want to customize this)
+      const userType = await this.userTypeRepository.findOne({
+        where: { id: 1 }, // Assuming 1 is the default user type
+      });
+
+      if (!userType) {
+        throw new BadRequestException('Default user type not found');
+      }
+
+      const credentials = this.credentialsRepository.create({
+        userId: user.id,
+        userTypeId: userType.id,
+        accessMethodId: accessMethod.id,
+      });
+
+      await queryRunner.manager.save(credentials);
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

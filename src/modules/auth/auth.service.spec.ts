@@ -1,28 +1,36 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { JwtService } from '@nestjs/jwt';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { AccessHistory } from '../users/entities/access-history.entity';
+import { BcryptService } from '../../utils/bcrypt/bcrypt.service';
+import { User } from '../users/entities/user.entity';
 import { UnauthorizedException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
   let service: AuthService;
   let usersService: UsersService;
-  let accessHistoryRepository: Repository<AccessHistory>;
+  let jwtService: JwtService;
+
+  const mockAccessHistoryRepository = {
+    save: jest.fn(),
+  };
 
   const mockUsersService = {
     findByUsername: jest.fn(),
+    findByEmail: jest.fn(),
+    update: jest.fn(),
+    addAccessMethod: jest.fn(),
+    create: jest.fn(),
   };
 
   const mockJwtService = {
     sign: jest.fn(),
   };
 
-  const mockAccessHistoryRepository = {
-    save: jest.fn(),
+  const mockBcryptService = {
+    comparePassword: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -38,6 +46,10 @@ describe('AuthService', () => {
           useValue: mockJwtService,
         },
         {
+          provide: BcryptService,
+          useValue: mockBcryptService,
+        },
+        {
           provide: getRepositoryToken(AccessHistory),
           useValue: mockAccessHistoryRepository,
         },
@@ -46,90 +58,94 @@ describe('AuthService', () => {
 
     service = module.get<AuthService>(AuthService);
     usersService = module.get<UsersService>(UsersService);
-    accessHistoryRepository = module.get<Repository<AccessHistory>>(
-      getRepositoryToken(AccessHistory),
-    );
+    jwtService = module.get<JwtService>(JwtService);
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  describe('validateUser', () => {
-    it('should throw UnauthorizedException when user not found', async () => {
-      mockUsersService.findByUsername.mockResolvedValue(null);
+  describe('validateOrCreateGoogleUser', () => {
+    const mockGoogleUser = {
+      email: 'test@example.com',
+      fullName: 'Test User',
+      username: 'testuser',
+      profileImage: 'https://example.com/photo.jpg',
+    };
 
-      await expect(
-        service.validateUser('testuser', 'password'),
-      ).rejects.toThrow(UnauthorizedException);
-    });
-
-    it('should throw UnauthorizedException when password is invalid', async () => {
-      const mockUser = {
+    it('should update existing user with Google method', async () => {
+      const mockExistingUser = {
         id: 1,
-        username: 'testuser',
+        email: 'test@example.com',
+        profileImage: 'old-photo.jpg',
         credentials: [
-          {
-            passwordHash: await bcrypt.hash('rightpassword', 10),
-          },
+          { accessMethod: { methodName: 'credentials' } },
         ],
       };
 
-      mockUsersService.findByUsername.mockResolvedValue(mockUser);
+      mockUsersService.findByEmail.mockResolvedValue(mockExistingUser);
+      mockUsersService.update.mockResolvedValue({
+        ...mockExistingUser,
+        profileImage: mockGoogleUser.profileImage,
+      });
 
-      await expect(
-        service.validateUser('testuser', 'wrongpassword'),
-      ).rejects.toThrow(UnauthorizedException);
+      const result = await service.validateOrCreateGoogleUser(mockGoogleUser);
+
+      expect(mockUsersService.findByEmail).toHaveBeenCalledWith(mockGoogleUser.email);
+      expect(mockUsersService.update).toHaveBeenCalledWith(mockExistingUser.id, {
+        profileImage: mockGoogleUser.profileImage,
+      });
+      expect(mockUsersService.addAccessMethod).toHaveBeenCalledWith(mockExistingUser.id, 'google');
+      expect(result).toBeDefined();
     });
 
-    it('should return user when credentials are valid', async () => {
-      const password = 'correctpassword';
-      const passwordHash = await bcrypt.hash(password, 10);
-      const mockUser = {
+    it('should create new user with Google method', async () => {
+      mockUsersService.findByEmail.mockResolvedValue(null);
+      mockUsersService.create.mockResolvedValue({
         id: 1,
-        username: 'testuser',
-        credentials: [
-          {
-            passwordHash,
-          },
-        ],
-      };
+        ...mockGoogleUser,
+      });
 
-      mockUsersService.findByUsername.mockResolvedValue(mockUser);
+      const result = await service.validateOrCreateGoogleUser(mockGoogleUser);
 
-      const result = await service.validateUser('testuser', password);
-      expect(result).toEqual(mockUser);
+      expect(mockUsersService.findByEmail).toHaveBeenCalledWith(mockGoogleUser.email);
+      expect(mockUsersService.create).toHaveBeenCalledWith({
+        ...mockGoogleUser,
+        accessMethod: 'google',
+        userTypeId: 1,
+      });
+      expect(result).toBeDefined();
+      expect(result.id).toBe(1);
     });
   });
 
-  describe('login', () => {
+  describe('loginWithGoogle', () => {
     it('should create access history and return JWT token', async () => {
       const mockUser = {
         id: 1,
         username: 'testuser',
         credentials: [
-          {
-            accessMethodId: 1,
-            passwordHash: await bcrypt.hash('password', 10),
-          },
+          { accessMethod: { methodName: 'google', id: 2 } },
         ],
-      };
+        email: 'email@gmail.com'
+      } as User;
 
       const mockToken = 'jwt-token';
-      mockUsersService.findByUsername.mockResolvedValue(mockUser);
       mockJwtService.sign.mockReturnValue(mockToken);
-      mockAccessHistoryRepository.save.mockResolvedValue({});
 
-      const result = await service.login({
-        username: 'testuser',
-        password: 'password',
-      });
+      const result = await service.loginWithGoogle(mockUser);
 
-      expect(result).toEqual({ access_token: mockToken });
+      console.log('result', mockUser.credentials[0].accessMethod.id);
+
       expect(mockAccessHistoryRepository.save).toHaveBeenCalledWith({
         userId: mockUser.id,
-        accessMethodId: mockUser.credentials[0].accessMethodId,
+        accessMethodId: mockUser.credentials[0].accessMethod.id,
       });
+      expect(mockJwtService.sign).toHaveBeenCalledWith({
+        username: mockUser.username,
+        sub: mockUser.id,
+      });
+      expect(result).toEqual({ access_token: mockToken });
     });
   });
 });

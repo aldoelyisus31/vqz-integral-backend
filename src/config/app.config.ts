@@ -26,6 +26,11 @@ export const APP_CONFIG = () => ({
     secret   : process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRES_IN,
   },
+  google: {
+    clientId    : process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackUrl : process.env.GOOGLE_CALLBACK_URL,
+  },
 });
 
 /**
@@ -43,6 +48,9 @@ export const APP_CONFIG = () => ({
  * - `BCRYPT_SALT_ROUNDS`: The number of salt rounds for bcrypt hashing (default: 10).
  * - `JWT_SECRET`: The secret key used for JWT signing (required).
  * - `JWT_EXPIRES_IN`: The expiration time for JWT tokens (required).
+ * - `GOOGLE_CLIENT_ID`: The client ID for Google OAuth (required).
+ * - `GOOGLE_CLIENT_SECRET`: The client secret for Google OAuth (required).
+ * - `GOOGLE_CALLBACK_URL`: The callback URL for Google OAuth (required).
  */
 export const APP_CONFIG_SCHEMA = Joi.object({
   NODE_ENV: Joi.string().default('development'),
@@ -61,6 +69,10 @@ export const APP_CONFIG_SCHEMA = Joi.object({
   // JWT Config ----------------------------------------------------
   JWT_SECRET    : Joi.string().min(1).required(),
   JWT_EXPIRES_IN: Joi.string().min(1).required(),
+  // Google OAuth Config -------------------------------------------
+  GOOGLE_CLIENT_ID    : Joi.string().min(1).required(),
+  GOOGLE_CLIENT_SECRET: Joi.string().min(1).required(),
+  GOOGLE_CALLBACK_URL : Joi.string().uri().required(),
 });
 
 export const validateAppConfig = (config: Record<string, any>) => {

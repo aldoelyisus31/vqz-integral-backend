@@ -51,7 +51,7 @@ describe('Auth (e2e)', () => {
       const response = await request(app.getHttpServer()).post('/auth/register');
   
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('username must be longer than or equal to 3 characters, username should not be empty, username must be a string, email should not be empty, email must be an email, password must be longer than or equal to 8 characters, password should not be empty, password must be a string, userTypeId should not be empty, userTypeId must be a number conforming to the specified constraints, accessMethodId should not be empty, accessMethodId must be a number conforming to the specified constraints');
+      expect(response.body.message).toBe('username must be longer than or equal to 3 characters, username should not be empty, username must be a string, email should not be empty, email must be an email, userTypeId should not be empty, userTypeId must be a number conforming to the specified constraints');
     });
   
     it('should register a new user with valid data', async () => {

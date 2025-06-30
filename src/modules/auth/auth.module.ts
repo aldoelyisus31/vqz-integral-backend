@@ -9,6 +9,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
 import { AccessHistory } from '../users/entities/access-history.entity';
 import { UtilsModule } from '../../utils/utils.module';
+import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { UtilsModule } from '../../utils/utils.module';
     TypeOrmModule.forFeature([AccessHistory]),
     UtilsModule
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, GoogleStrategy],
   controllers: [AuthController],
   exports: [AuthService],
 })

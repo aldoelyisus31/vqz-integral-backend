@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional, IsNumber } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional, IsNumber, IsUrl } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
@@ -23,12 +23,13 @@ export class CreateUserDto {
   @ApiProperty({
     description: 'The password for the user account',
     example: 'password123',
-    minLength: 8
+    minLength: 8,
+    required: false
   })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @MinLength(8)
-  password: string;
+  password?: string;
 
   @ApiProperty({
     description: 'The full name of the user',
@@ -40,6 +41,15 @@ export class CreateUserDto {
   fullName?: string;
 
   @ApiProperty({
+    description: 'The profile image URL',
+    example: 'https://lh3.googleusercontent.com/a/photo.jpg',
+    required: false
+  })
+  @IsUrl()
+  @IsOptional()
+  profileImage?: string;
+
+  @ApiProperty({
     description: 'The user type ID',
     example: 1
   })
@@ -49,9 +59,19 @@ export class CreateUserDto {
 
   @ApiProperty({
     description: 'The access method ID',
-    example: 1
+    example: 1,
+    required: false
   })
   @IsNumber()
-  @IsNotEmpty()
-  accessMethodId: number;
+  @IsOptional()
+  accessMethodId?: number;
+
+  @ApiProperty({
+    description: 'The access method name (e.g., "credentials" or "google")',
+    example: 'credentials',
+    required: false
+  })
+  @IsString()
+  @IsOptional()
+  accessMethod?: string;
 }

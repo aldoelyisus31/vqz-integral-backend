@@ -136,10 +136,10 @@ describe('UsersController (e2e)', () => {
   describe('GET /users/username/:username', () => {
     it('should get user by valid username', () => {
       return request(app.getHttpServer())
-        .get('/users/username/testuser')
+        .get('/users/username/testuser_user_module')
         .expect(HttpStatus.OK)
         .expect(res => {
-          expect(res.body.username).toBe('testuser');
+          expect(res.body.username).toBe('testuser_user_module');
           expect(res.body.email).toBeDefined();
           expect(res.body.credentials).toBeUndefined();
         });

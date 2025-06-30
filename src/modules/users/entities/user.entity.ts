@@ -38,6 +38,15 @@ export class User {
 
   @IsOptional()
   @ApiProperty({
+    description: 'The profile image URL of the user',
+    example: 'https://lh3.googleusercontent.com/a/photo.jpg',
+    required: false
+  })
+  @Column({ type: 'text', nullable: true })
+  profileImage?: string;
+
+  @IsOptional()
+  @ApiProperty({
     description: 'The timestamp when the user was created',
     example: '2023-01-01T00:00:00Z'
   })

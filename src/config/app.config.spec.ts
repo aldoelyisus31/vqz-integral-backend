@@ -26,6 +26,9 @@ describe('App Configuration', () => {
       process.env.BCRYPT_SALT_ROUNDS = '10';
       process.env.JWT_SECRET = 'secret';
       process.env.JWT_EXPIRES_IN = '1h';
+      process.env.GOOGLE_CLIENT_ID = "GOOGLE_CLIENT_ID";
+      process.env.GOOGLE_CLIENT_SECRET = "GOOGLE_CLIENT_SECRET";
+      process.env.GOOGLE_CALLBACK_URL = "http://localhost:3000/api/auth/google/callback";
 
       const config = APP_CONFIG();
 
@@ -49,6 +52,11 @@ describe('App Configuration', () => {
           secret: 'secret',
           expiresIn: '1h',
         },
+        google: {
+          clientId: "GOOGLE_CLIENT_ID",
+          clientSecret: "GOOGLE_CLIENT_SECRET",
+          callbackUrl: "http://localhost:3000/api/auth/google/callback",
+        },
       });
     });
   });
@@ -67,6 +75,9 @@ describe('App Configuration', () => {
         BCRYPT_SALT_ROUNDS: 10,
         JWT_SECRET: 'secret',
         JWT_EXPIRES_IN: '1h',
+        GOOGLE_CLIENT_ID: 'GOOGLE_CLIENT_ID',
+        GOOGLE_CLIENT_SECRET: 'GOOGLE_CLIENT_SECRET',
+        GOOGLE_CALLBACK_URL: 'http://localhost:3000/api/auth/google/callback'
       };
 
       const validatedConfig = validateAppConfig(config);
@@ -81,6 +92,9 @@ describe('App Configuration', () => {
         DB_NAME: 'testdb',
         JWT_SECRET: 'secret',
         JWT_EXPIRES_IN: '1h',
+        GOOGLE_CLIENT_ID: 'GOOGLE_CLIENT_ID',
+        GOOGLE_CLIENT_SECRET: 'GOOGLE_CLIENT_SECRET',
+        GOOGLE_CALLBACK_URL: 'http://localhost:3000/api/auth/google/callback'
       };
 
       const validatedConfig = validateAppConfig(minimalConfig);
@@ -151,6 +165,9 @@ describe('App Configuration', () => {
         BCRYPT_SALT_ROUNDS: 10,
         JWT_SECRET: 'secret',
         JWT_EXPIRES_IN: '1h',
+        GOOGLE_CLIENT_ID: 'GOOGLE_CLIENT_ID',
+        GOOGLE_CLIENT_SECRET: 'GOOGLE_CLIENT_SECRET',
+        GOOGLE_CALLBACK_URL: 'http://localhost:3000/api/auth/google/callback'
       };
 
       const { error } = APP_CONFIG_SCHEMA.validate(validConfig);
