@@ -43,7 +43,7 @@ volumes:
   #     dockerfile: Dockerfile
   #     target: dev
   #   ports:
-  #     - "3000:3000"
+  #     - "3005:3000"
   #     - "9229:9229"  # Debug port
   #   environment:
   #     - NODE_ENV=development
@@ -52,7 +52,7 @@ volumes:
   #     - /app/node_modules
   #   command: npm run start:dev  # Use development mode with hot-reload
   #   healthcheck:
-  #     test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+  #     test: ["CMD", "wget", "-q", "--spider", "http://localhost:3005/health"]
   #     interval: 30s
   #     timeout: 3s
   #     retries: 3

@@ -6,11 +6,11 @@ services:
       context: ../../
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3005:3000"
     environment:
       - NODE_ENV=production
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3005/health"]
       interval: 30s
       timeout: 3s
       retries: 3
