@@ -8,6 +8,12 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Permitir CORS para el frontend de Vite
+  app.enableCors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+  });
+
   const configService = app.get(ConfigService);
   const PORT = configService.get<number>('app.port');
 

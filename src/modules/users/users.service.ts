@@ -137,6 +137,37 @@ export class UsersService {
     return user;
   }
 
+  async findByParams(params: Partial<User>): Promise<User[]> {
+    const queryBuilder = this.usersRepository.createQueryBuilder('user');
+
+    if (params.id) {
+      queryBuilder.andWhere('user.id = :id', { id: params.id });
+    }
+
+    if (params.username) {
+      queryBuilder.andWhere('user.username LIKE :username', { username: `%${params.username}%` });
+    }
+
+    if (params.email) {
+      queryBuilder.andWhere('user.email LIKE :email', { email: `%${params.email}%` });
+    }
+
+    if (params.createdAt) {
+      queryBuilder.andWhere('user.createdAt = :createdAt', { createdAt: params.createdAt });
+    }
+
+    queryBuilder.leftJoinAndSelect('user.credentials', 'credentials');
+    queryBuilder.leftJoinAndSelect('user.accessHistory', 'accessHistory');
+
+    const users = await queryBuilder.getMany();
+
+    if (!users.length) {
+      throw new NotFoundException('No users found with the given parameters');
+    }
+
+    return users;
+  }
+
   async findByEmail(email: string): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { email },
@@ -147,8 +178,24 @@ export class UsersService {
   }
 
   async update(id: number, updateData: Partial<User>): Promise<User> {
+    const user = await this.findById(id);
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
     await this.usersRepository.update(id, updateData);
     return this.findById(id);
+  }
+
+  async delete(id: number): Promise<void> {
+    const user = await this.findById(id);
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    await this.usersRepository.delete(id);
   }
 
   async addAccessMethod(userId: number, methodName: string): Promise<void> {

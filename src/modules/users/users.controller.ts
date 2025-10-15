@@ -1,31 +1,49 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, ConflictException, HttpStatus, ParseIntPipe } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { Controller, Post, Body, NotFoundException, ConflictException, HttpStatus, UseGuards, Get, Query, Put, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Create a new user' })
-  @ApiBody({ type: CreateUserDto })
+  @Post('register')
+  @ApiOperation({ summary: 'Register a new user' })
+  @ApiBody({
+    type: CreateUserDto,
+    examples: {
+      example1: {
+        summary: 'Example user registration',
+        value: {
+          username: 'geraldine',
+          email: 'geraldinne@mail.com',
+          password: 'password123',
+          fullName: 'geraldine calvillo',
+          profileImage: 'https://lh3.googleusercontent.com/a/photo.jpg',
+          userTypeId: 1,
+          accessMethodId: 1,
+          accessMethod: 'credentials',
+        },
+      },
+    },
+  })
   @ApiResponse({
     status: HttpStatus.CREATED,
-    description: 'User has been successfully created.',
-    type: User
+    description: 'User has been successfully registered.',
+    type: User,
   })
   @ApiResponse({
     status: HttpStatus.CONFLICT,
-    description: 'Username or email already exists.'
+    description: 'Username or email already exists.',
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input data.'
+    description: 'Invalid input data.',
   })
-  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+  async register(@Body() createUserDto: CreateUserDto): Promise<User> {
     try {
       return await this.usersService.create(createUserDto);
     } catch (error) {
@@ -36,63 +54,138 @@ export class UsersController {
     }
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get user by ID' })
-  @ApiParam({
-    name: 'id',
-    required: true,
-    description: 'User ID',
-    schema: { type: 'integer' }
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
+  @Post('create')
+  @ApiOperation({ summary: 'Create a resource for authenticated users' })
+  @ApiBody({
+    type: CreateUserDto,
+    examples: {
+      example1: {
+        summary: 'Example resource creation',
+        value: {
+          username: 'john_doe',
+          email: 'john.doe@mail.com',
+          password: 'securepassword',
+          fullName: 'John Doe',
+          profileImage: 'https://example.com/profile.jpg',
+          userTypeId: 2,
+          accessMethodId: 1,
+          accessMethod: 'credentials',
+        },
+      },
+    },
   })
   @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Returns the user information.',
-    type: User
+    status: HttpStatus.CREATED,
+    description: 'Resource created successfully for authenticated user.',
+    type: User,
   })
   @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'User not found.'
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized access.',
   })
-  async findById(@Param('id', ParseIntPipe) id: number): Promise<User> {
+  async createForAuthenticatedUser(@Body() createUserDto: CreateUserDto): Promise<User> {
     try {
-      const user = await this.usersService.findById(id);
-      delete user.credentials;
-      return user;
+      return await this.usersService.create(createUserDto);
     } catch (error) {
-      if (error instanceof NotFoundException) {
+      if (error instanceof ConflictException) {
         throw error;
       }
       throw error;
     }
   }
 
-  @Get('username/:username')
-  @ApiOperation({ summary: 'Get user by username' })
-  @ApiParam({
+  @Get('filter')
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Filter users with multiple criteria' })
+  @ApiQuery({
+    name: 'id',
+    required: false,
+    description: 'Filter by user ID',
+    schema: { type: 'integer' },
+  })
+  @ApiQuery({
     name: 'username',
-    required: true,
-    description: 'Username',
-    schema: { type: 'string' }
+    required: false,
+    description: 'Filter by username (partial match)',
+    schema: { type: 'string' },
+  })
+  @ApiQuery({
+    name: 'email',
+    required: false,
+    description: 'Filter by email (partial match)',
+    schema: { type: 'string' },
+  })
+  @ApiQuery({
+    name: 'createdAt',
+    required: false,
+    description: 'Filter by creation date',
+    schema: { type: 'string', format: 'date-time' },
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Returns the user information.',
-    type: User
+    description: 'Returns filtered users.',
   })
   @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'User not found.'
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'JWT token required.',
   })
-  async findByUsername(@Param('username') username: string): Promise<User> {
-    try {
-      const user = await this.usersService.findByUsername(username);
-      delete user.credentials;
-      return user;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      throw error;
-    }
+  async filterUsers(@Query() query: any): Promise<User[]> {
+    return this.usersService.findByParams(query);
+  }
+
+  @Put(':id')
+  
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Update user by ID' })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'User ID to update',
+    schema: { type: 'integer' },
+  })
+  @ApiBody({
+    description: 'Partial user data to update',
+    type: User,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User has been successfully updated.',
+    type: User,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'JWT token required.',
+  })
+  async updateUser(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateData: Partial<User>,
+  ): Promise<User> {
+    return this.usersService.update(id, updateData);
+  }
+
+  @Delete(':id')
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Delete user by ID' })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'User ID to delete',
+    schema: { type: 'integer' },
+  })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: 'User has been successfully deleted.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'JWT token required.',
+  })
+  async deleteUser(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    return this.usersService.delete(id);
   }
 }
