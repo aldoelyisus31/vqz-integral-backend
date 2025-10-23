@@ -4,13 +4,14 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { LogAction } from '../action-logs/decorators/log-action.decorator';
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post('register')
+  /*@Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiBody({
     type: CreateUserDto,
@@ -52,11 +53,12 @@ export class UsersController {
       }
       throw error;
     }
-  }
+  }*/
 
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
   @Post('create')
+  @LogAction('CREATE', 'Usuario creado exitosamente')
   @ApiOperation({ summary: 'Create a resource for authenticated users' })
   @ApiBody({
     type: CreateUserDto,
@@ -137,7 +139,7 @@ export class UsersController {
   }
 
   @Put(':id')
-  
+  @LogAction('UPDATE', 'Usuario actualizado exitosamente')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update user by ID' })
@@ -168,6 +170,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @LogAction('DELETE', 'Usuario eliminado exitosamente')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Delete user by ID' })
