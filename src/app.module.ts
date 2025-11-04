@@ -11,6 +11,7 @@ import { UtilsModule } from './utils/utils.module';
 import { UserTypeModule } from './modules/user-type/user-type.module';
 import { ActionLogsModule } from './modules/action-logs/action-logs.module';
 import { ActionLogInterceptor } from './modules/action-logs/interceptors/action-log.interceptor';
+import { BannerModule } from './modules/banner/banner.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ActionLogInterceptor } from './modules/action-logs/interceptors/action-
     UtilsModule,
     UserTypeModule,
     ActionLogsModule,
+    BannerModule,
   ],
   controllers: [AppController],
   providers: [

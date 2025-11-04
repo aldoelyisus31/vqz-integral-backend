@@ -2,11 +2,18 @@ import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Servir archivos estáticos desde la carpeta uploads
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+  });
 
   // Permitir CORS para el frontend de Vite
   app.enableCors({
@@ -36,6 +43,8 @@ async function bootstrap() {
     .setVersion('1.0')
     .addTag('Authentication', 'Authentication related endpoints')
     .addTag('Users', 'User management endpoints')
+    .addTag('User Types', 'User type management endpoints')
+    .addTag('Banner', 'Banner image management endpoints')
     .addBearerAuth(
       {
         type: 'http',
