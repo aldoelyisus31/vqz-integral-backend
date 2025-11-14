@@ -13,6 +13,7 @@ import { ActionLogsModule } from './modules/action-logs/action-logs.module';
 import { ActionLogInterceptor } from './modules/action-logs/interceptors/action-log.interceptor';
 import { BannerModule } from './modules/banner/banner.module';
 import { TestimonialsModule } from './modules/testimonials/testimonials.module';
+import { CompletedWorksModule } from './modules/completed-works/completed-works.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { TestimonialsModule } from './modules/testimonials/testimonials.module';
     ActionLogsModule,
     BannerModule,
     TestimonialsModule,
+    CompletedWorksModule,
   ],
   controllers: [AppController],
   providers: [

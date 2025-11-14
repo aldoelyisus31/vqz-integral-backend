@@ -64,6 +64,10 @@ export class TestimonialsService {
     return await this.repo.find({ where: { deletedAt: null } });
   }
 
+  async findAllActive(): Promise<Testimonial[]> {
+    return await this.repo.find({ where: { active: true } });
+  }
+
   async findById(id: number): Promise<Testimonial> {
     const t = await this.repo.findOne({ where: { id } });
     if (!t) throw new NotFoundException('Testimonial not found');

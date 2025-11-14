@@ -2,20 +2,19 @@ import { Controller, Post, Body, UseGuards, UseInterceptors, UploadedFile, Get, 
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
-import { TestimonialsService } from './testimonials.service';
-import { CreateTestimonialDto } from './dto/create-testimonial.dto';
-import { UpdateTestimonialDto } from './dto/update-testimonial.dto';
+import { CompletedWorksService } from './completed-works.service';
+import { CreateCompletedWorkDto } from './dto/create-completed-work.dto';
+import { UpdateCompletedWorkDto } from './dto/update-completed-work.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { LogAction } from '../action-logs/decorators/log-action.decorator';
 
-@ApiTags('Testimonials')
-@Controller('testimonials')
-export class TestimonialsController {
-  constructor(private readonly service: TestimonialsService) {}
+@ApiTags('Completed Works')
+@Controller('completed-works')
+export class CompletedWorksController {
+  constructor(private readonly service: CompletedWorksService) {}
 
   private normalizeDto(dto: any) {
     if (!dto) return dto;
-    // If client sent a single field named "dto" (JSON string or object), parse it
     if (dto.dto) {
       try {
         return typeof dto.dto === 'string' ? JSON.parse(dto.dto) : dto.dto;
@@ -24,11 +23,9 @@ export class TestimonialsController {
       }
     }
 
-    // If fields are strings (multipart/form-data), convert numeric/boolean-like values
     const normalized: any = {};
     for (const key of Object.keys(dto)) {
       const val = dto[key];
-      // try parse booleans
       if (val === 'true') normalized[key] = true;
       else if (val === 'false') normalized[key] = false;
       else if (!isNaN(val) && val !== '') normalized[key] = Number(val);
@@ -37,22 +34,11 @@ export class TestimonialsController {
     return normalized;
   }
 
-  // Public endpoint: users can submit testimonials (marked active automatically)
-  @Post('public')
-  @UseInterceptors(FileInterceptor('image', { storage: memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }))
-  @ApiOperation({ summary: 'Public: create testimonial (auto active)' })
-  @ApiBody({ type: CreateTestimonialDto })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Testimonial created and marked active.' })
-  async createPublic(@Body() dto: any, @UploadedFile() file: any) {
-    const payload = this.normalizeDto(dto);
-    return await this.service.createPublic(payload, file);
-  }
-
-  // Public endpoint: get active testimonials
-  @Get('public/active')
-  @ApiOperation({ summary: 'Public: get all active testimonials' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'List of active testimonials for public viewing' })
-  async getActiveTestimonials() {
+  // Public endpoint: get active works
+  @Get('public')
+  @ApiOperation({ summary: 'Public: get all active completed works' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'List of active completed works' })
+  async getActiveWorks() {
     return await this.service.findAllActive();
   }
 
@@ -60,25 +46,27 @@ export class TestimonialsController {
   @Post()
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
-  @LogAction('CREATE', 'Testimonial creado exitosamente')
+  @LogAction('CREATE', 'Trabajo realizado creado exitosamente')
   @UseInterceptors(FileInterceptor('image', { storage: memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }))
-  @ApiOperation({ summary: 'Admin: create testimonial' })
-  @ApiBody({ type: CreateTestimonialDto })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Testimonial created.' })
-  async createAdmin(@Body() dto: any, @UploadedFile() file: any) {
+  @ApiOperation({ summary: 'Admin: create completed work' })
+  @ApiBody({ type: CreateCompletedWorkDto })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Completed work created.' })
+  async create(@Body() dto: any, @UploadedFile() file: any) {
     const payload = this.normalizeDto(dto);
-    return await this.service.createAdmin(payload, file);
+    return await this.service.create(payload, file);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all active testimonials' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'List of active testimonials' })
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Admin: get all completed works' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'List of all completed works' })
   async getAll() {
     return await this.service.findAll();
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get testimonial by id' })
+  @ApiOperation({ summary: 'Get completed work by id' })
   @ApiParam({ name: 'id', schema: { type: 'integer' } })
   async getById(@Param('id', ParseIntPipe) id: number) {
     return await this.service.findById(id);
@@ -87,9 +75,10 @@ export class TestimonialsController {
   @Put(':id')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
-  @LogAction('UPDATE', 'Testimonial actualizado exitosamente')
+  @LogAction('UPDATE', 'Trabajo realizado actualizado exitosamente')
   @UseInterceptors(FileInterceptor('image', { storage: memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }))
-  @ApiOperation({ summary: 'Admin: update testimonial' })
+  @ApiOperation({ summary: 'Admin: update completed work' })
+  @ApiBody({ type: UpdateCompletedWorkDto })
   async update(@Param('id', ParseIntPipe) id: number, @Body() dto: any, @UploadedFile() file: any) {
     const payload = this.normalizeDto(dto);
     return await this.service.update(id, payload, file);
@@ -98,8 +87,8 @@ export class TestimonialsController {
   @Delete(':id')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
-  @LogAction('DELETE', 'Testimonial eliminado exitosamente')
-  @ApiOperation({ summary: 'Admin: soft delete testimonial' })
+  @LogAction('DELETE', 'Trabajo realizado eliminado exitosamente')
+  @ApiOperation({ summary: 'Admin: soft delete completed work' })
   async softDelete(@Param('id', ParseIntPipe) id: number) {
     return await this.service.softDelete(id);
   }
@@ -107,8 +96,8 @@ export class TestimonialsController {
   @Post(':id/restore')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
-  @LogAction('UPDATE', 'Testimonial restaurado exitosamente')
-  @ApiOperation({ summary: 'Admin: restore testimonial' })
+  @LogAction('UPDATE', 'Trabajo realizado restaurado exitosamente')
+  @ApiOperation({ summary: 'Admin: restore completed work' })
   async restore(@Param('id', ParseIntPipe) id: number) {
     return await this.service.restore(id);
   }
@@ -116,7 +105,7 @@ export class TestimonialsController {
   @Get('deleted/all')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Admin: get all testimonials including deleted' })
+  @ApiOperation({ summary: 'Admin: get all completed works including deleted' })
   async getAllWithDeleted() {
     return await this.service.findAllWithDeleted();
   }
@@ -124,8 +113,8 @@ export class TestimonialsController {
   @Delete(':id/permanent')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
-  @LogAction('DELETE', 'Testimonial eliminado permanentemente')
-  @ApiOperation({ summary: 'Admin: permanently delete testimonial' })
+  @LogAction('DELETE', 'Trabajo realizado eliminado permanentemente')
+  @ApiOperation({ summary: 'Admin: permanently delete completed work' })
   async permanentDelete(@Param('id', ParseIntPipe) id: number) {
     return await this.service.permanentDelete(id);
   }
