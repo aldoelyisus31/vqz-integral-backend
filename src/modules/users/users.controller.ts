@@ -2,6 +2,7 @@ import { Controller, Post, Body, NotFoundException, ConflictException, HttpStatu
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { LogAction } from '../action-logs/decorators/log-action.decorator';
@@ -150,8 +151,30 @@ export class UsersController {
     schema: { type: 'integer' },
   })
   @ApiBody({
-    description: 'Partial user data to update',
-    type: User,
+    description: 'User data to update (username, email, fullName, profileImage, userTypeId, password)',
+    type: UpdateUserDto,
+    examples: {
+      example1: {
+        summary: 'Update user basic info',
+        value: {
+          username: 'messi',
+          email: 'messi@mail.com',
+          fullName: 'Lionel Andrés Messi',
+        },
+      },
+      example2: {
+        summary: 'Update user type',
+        value: {
+          userTypeId: 2,
+        },
+      },
+      example3: {
+        summary: 'Update password',
+        value: {
+          password: 'newSecurePassword123',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -159,30 +182,49 @@ export class UsersController {
     type: User,
   })
   @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Username or email already exists.',
+  })
+  @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
     description: 'JWT token required.',
   })
   async updateUser(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateData: Partial<User>,
+    @Body() updateUserDto: UpdateUserDto,
   ): Promise<User> {
-    return this.usersService.update(id, updateData);
+    try {
+      return await this.usersService.update(id, updateUserDto);
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof ConflictException) {
+        throw error;
+      }
+      throw error;
+    }
   }
 
   @Delete(':id')
   @LogAction('DELETE', 'Usuario eliminado exitosamente')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Delete user by ID' })
+  @ApiOperation({ summary: 'Soft delete user by ID' })
   @ApiParam({
     name: 'id',
     required: true,
-    description: 'User ID to delete',
+    description: 'User ID to soft delete',
     schema: { type: 'integer' },
   })
   @ApiResponse({
     status: HttpStatus.NO_CONTENT,
-    description: 'User has been successfully deleted.',
+    description: 'User has been successfully soft deleted.',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found.',
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
@@ -190,5 +232,81 @@ export class UsersController {
   })
   async deleteUser(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.usersService.delete(id);
+  }
+
+  @Post(':id/restore')
+  @LogAction('UPDATE', 'Usuario restaurado exitosamente')
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Restore a soft deleted user' })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'User ID to restore',
+    schema: { type: 'integer' },
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User has been successfully restored.',
+    type: User,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'User is not deleted.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'JWT token required.',
+  })
+  async restoreUser(@Param('id', ParseIntPipe) id: number): Promise<User> {
+    return this.usersService.restore(id);
+  }
+
+  @Get('deleted/all')
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get all users including soft deleted ones' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Returns all users including deleted ones.',
+    type: [User],
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'JWT token required.',
+  })
+  async getAllWithDeleted(): Promise<User[]> {
+    return this.usersService.findAllWithDeleted();
+  }
+
+  @Delete(':id/permanent')
+  @LogAction('DELETE', 'Usuario eliminado permanentemente')
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Permanently delete a user (cannot be restored)' })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'User ID to permanently delete',
+    schema: { type: 'integer' },
+  })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: 'User has been permanently deleted.',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'JWT token required.',
+  })
+  async permanentDeleteUser(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    return this.usersService.permanentDelete(id);
   }
 }

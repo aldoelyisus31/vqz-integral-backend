@@ -157,6 +157,7 @@ export class UsersService {
     }
 
     queryBuilder.leftJoinAndSelect('user.credentials', 'credentials');
+    queryBuilder.leftJoinAndSelect('credentials.userType', 'userType');
     queryBuilder.leftJoinAndSelect('user.accessHistory', 'accessHistory');
 
     const users = await queryBuilder.getMany();
@@ -177,19 +178,124 @@ export class UsersService {
     return user;
   }
 
-  async update(id: number, updateData: Partial<User>): Promise<User> {
+  async update(id: number, updateData: any): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      relations: ['credentials'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    // Separar datos del usuario y datos de credenciales
+    const { userTypeId, password, ...userData } = updateData;
+
+    // Actualizar datos del usuario
+    if (Object.keys(userData).length > 0) {
+      // Verificar duplicados de username y email solo si están cambiando
+      if (userData.username && userData.username !== user.username) {
+        const existingUser = await this.usersRepository.findOne({
+          where: { username: userData.username },
+        });
+        if (existingUser && existingUser.id !== id) {
+          throw new ConflictException(`Username '${userData.username}' already exists`);
+        }
+      }
+
+      if (userData.email && userData.email !== user.email) {
+        const existingUser = await this.usersRepository.findOne({
+          where: { email: userData.email },
+        });
+        if (existingUser && existingUser.id !== id) {
+          throw new ConflictException(`Email '${userData.email}' already exists`);
+        }
+      }
+
+      await this.usersRepository.update(id, userData);
+    }
+
+    // Actualizar userTypeId o password en credentials si se proporcionaron
+    if (userTypeId !== undefined || password !== undefined) {
+      const credential = await this.credentialsRepository.findOne({
+        where: { userId: id },
+      });
+
+      if (!credential) {
+        throw new NotFoundException(`Credentials for user ${id} not found`);
+      }
+
+      const credentialUpdates: any = {};
+
+      if (userTypeId !== undefined) {
+        // Validar que el userType existe
+        const userType = await this.userTypeRepository.findOne({
+          where: { id: userTypeId },
+        });
+
+        if (!userType) {
+          throw new BadRequestException(`User type with ID ${userTypeId} not found`);
+        }
+
+        credentialUpdates.userTypeId = userTypeId;
+      }
+
+      if (password !== undefined) {
+        credentialUpdates.passwordHash = await this.bcryptService.hashPassword(password);
+      }
+
+      if (Object.keys(credentialUpdates).length > 0) {
+        await this.credentialsRepository.update(credential.id, credentialUpdates);
+      }
+    }
+
+    return this.findById(id);
+  }
+
+  async delete(id: number): Promise<void> {
     const user = await this.findById(id);
 
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    await this.usersRepository.update(id, updateData);
+    // Soft delete
+    await this.usersRepository.softDelete(id);
+  }
+
+  async restore(id: number): Promise<User> {
+    // Restaurar usuario eliminado (soft delete)
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      withDeleted: true,
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    if (!user.deletedAt) {
+      throw new BadRequestException(`User with ID ${id} is not deleted`);
+    }
+
+    await this.usersRepository.restore(id);
     return this.findById(id);
   }
 
-  async delete(id: number): Promise<void> {
-    const user = await this.findById(id);
+  async findAllWithDeleted(): Promise<User[]> {
+    // Obtener todos los usuarios incluyendo los eliminados
+    return await this.usersRepository.find({
+      withDeleted: true,
+      relations: ['credentials', 'credentials.userType'],
+    });
+  }
+
+  async permanentDelete(id: number): Promise<void> {
+    // Eliminar permanentemente un usuario
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      withDeleted: true,
+    });
 
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);

@@ -102,17 +102,34 @@ export class AuthController {
     return this.authService.loginWithGoogle(req.user);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('profile')
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get user profile' })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Profile accessed successfully.',
+    description: 'User profile retrieved successfully.',
     schema: {
       type: 'object',
       properties: {
-        message: { type: 'string', example: 'Profile accessed successfully' }
+        id: { type: 'number', example: 1 },
+        username: { type: 'string', example: 'johndoe' },
+        email: { type: 'string', example: 'john.doe@example.com' },
+        fullName: { type: 'string', example: 'John Doe' },
+        profileImage: { type: 'string', example: 'https://example.com/profile.jpg' },
+        createdAt: { type: 'string', example: '2024-01-01T00:00:00.000Z' },
+        credentials: {
+          type: 'object',
+          properties: {
+            userType: {
+              type: 'object',
+              properties: {
+                id: { type: 'number', example: 2 },
+                typeName: { type: 'string', example: 'Admin' }
+              }
+            }
+          }
+        }
       }
     }
   })
@@ -120,7 +137,7 @@ export class AuthController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'User not authenticated.'
   })
-  getProfile() {
-    return { message: 'Profile accessed successfully' };
+  async getProfile(@Req() req) {
+    return await this.usersService.findById(req.user.userId);
   }
 }

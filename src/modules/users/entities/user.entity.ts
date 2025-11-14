@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, DeleteDateColumn, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserCredential } from './user-credential.entity';
 import { AccessHistory } from './access-history.entity';
@@ -52,6 +52,15 @@ export class User {
   })
   @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   createdAt?: Date;
+
+  @IsOptional()
+  @ApiProperty({
+    description: 'The timestamp when the user was soft deleted',
+    example: '2023-12-31T23:59:59Z',
+    required: false
+  })
+  @DeleteDateColumn({ type: 'timestamptz', nullable: true })
+  deletedAt?: Date;
 
   @IsOptional()
   @OneToMany(() => UserCredential, (credential) => credential.user)
