@@ -12,6 +12,7 @@ import { UserTypeModule } from './modules/user-type/user-type.module';
 import { ActionLogsModule } from './modules/action-logs/action-logs.module';
 import { ActionLogInterceptor } from './modules/action-logs/interceptors/action-log.interceptor';
 import { BannerModule } from './modules/banner/banner.module';
+import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { BannerModule } from './modules/banner/banner.module';
     UserTypeModule,
     ActionLogsModule,
     BannerModule,
+    TestimonialsModule,
   ],
   controllers: [AppController],
   providers: [
