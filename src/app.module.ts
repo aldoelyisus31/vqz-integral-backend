@@ -14,6 +14,7 @@ import { ActionLogInterceptor } from './modules/action-logs/interceptors/action-
 import { BannerModule } from './modules/banner/banner.module';
 import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { CompletedWorksModule } from './modules/completed-works/completed-works.module';
+import { BranchesModule } from './modules/branches/branches.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { CompletedWorksModule } from './modules/completed-works/completed-works.
     BannerModule,
     TestimonialsModule,
     CompletedWorksModule,
+    BranchesModule,
   ],
   controllers: [AppController],
   providers: [
